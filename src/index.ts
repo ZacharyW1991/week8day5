@@ -3,46 +3,21 @@ import { v4 as uuidv4 } from "uuid";
 
 function pageLoader(){
     console.log('page load');
-    const loginButton=document.getElementById('login-button');
-    loginButton.addEventListener('click', (e)=>logInUser());
+    // const loginButton=document.getElementById('login-button')!;
+    // loginButton.addEventListener( 'click', ()=>{
+    //     let userName=document.getElementById('username') as HTMLInputElement|null;
+    //     let userAge=document.getElementById('age') as HTMLInputElement|null;
+    //     if (userName!=null&&userAge!=null){
+    //         let currentUser:User=new User(userName, userAge)
+    //     }
+    //     });
+    const newShop:Shop=new Shop;
+    newShop.showItems()
+    newShop.updateCart()
+    
 }
 
 
-
-
-
-
-function createItem(name:string, price:number, description:string){
-    let newItem:Item={
-        id:uuidv4(),
-        name:name,
-        price:price,
-        description:description,
-    }
-    return newItem
-}
-
-function addToCart(user:User, item:Item){
-    user.cart.push(item)
-    user.cart.sort()
-}
-
-
-
-function cartTotal(user:User):number{
-    let total=0;
-    for (let i of user.cart){
-        total+=i.price
-    }
-    return total
-}
-
-function printCart(user:User){
-    for (let item of user.cart){
-        console.log(`${item.name}: $${item.price}`)
-    }
-    console.log(`Total: ${cartTotal(user)}`)
-}
 
 class Item{
 
@@ -83,6 +58,12 @@ class Item{
         public set description(value:string){
             this._description=value;
         }
+
+        public itemElement():HTMLDivElement{
+            let itemEl=document.createElement('div');
+            itemEl.innerHTML=`<p>Name: ${this.name}</p><br><p>Price: $${this.price}</p><br><button id=' `
+            return itemEl
+        }
     
 }
 
@@ -95,6 +76,7 @@ class User{
             let u1=new User(username, age);
             return u1
         }
+        return;
     }
 
     constructor(
@@ -105,32 +87,27 @@ class User{
     ){}
 
     
-    public cartHTMLElement(u1:User){
-        let itemList=document.getElementById('cart-area');
-        if (!itemList){
-            itemList.innerHTML='<h3>Cart is empty</h3>'
-        }
-        itemList.innerHTML='';
-        for (i of this.cart){
-            let itemInfo=document.createElement('div');
-            itemInfo.className='item-info';
-            itemInfo.innerHTML=`<h1>${i.name}</h1><br><p>$${i.price}</p><br><button id="remove-all">Remove All<button><br><button id="remove-one">-1</button>`
-            itemList.append(itemInfo);
-        }
+    public cartHTMLElement(){
+        for (let i of this.cart){
+        let cartElem=document.createElement('div');
+        cartElem.innerHTML=`<p>Name: ${i.name}</p><br><p>Price: $${i.price}</p><br><button id='remove-one-${i.id}'>Remove One</button><br><button id='remove-all-${i.id}'>Remove All</button>`;
+        const rmAllBtn=document.getElementById(`remove-all-${i.id}`)!;
+        rmAllBtn.addEventListener('click', () => this.removeFromCart(i));
+        const rmOneBtn=document.getElementById(`remove-one-${i.id}`)!;
+        rmOneBtn.addEventListener('click', () => this.removeQuantityFromCart(i, 1))
+        return cartElem
     }
-
-    public addRemoveEvenListeners(){
-        
+    return
     }
 
 
-    public removeFromCart(item:Item){
-        for(let i of this.cart){
-            if (i==item){
-                this.cart.splice(this.cart.indexOf(i), 1)
-            }
-        }
-        this.cart.sort()
+    public addToCart(item:Item):void{
+        this.cart.push(item)
+    }
+
+
+    public removeFromCart(remItem:Item):void{
+        this.cart=this.cart.filter( item => item.id !==remItem.id)
     }
     
     public removeQuantityFromCart(itemToRemove:Item, quantity:number){
@@ -138,6 +115,22 @@ class User{
             let index = this.cart.findIndex(item => item.id === itemToRemove.id);
             this.cart.splice(index, 1);
         }
+    }
+
+    public getCartTotal():number{
+        let total=0;
+        for (let item of this.cart){
+            total+=item.price
+        }
+        return total
+    }
+
+    public printCart():void{
+        console.log('Your Cart:')
+        for (let item of this.cart){
+            console.log(`${item.name}: $${item.price}`)
+        }
+        console.log(`Total: $${this.getCartTotal()}`)
     }
 
 
@@ -172,6 +165,68 @@ class User{
         this._cart=value;
     }
 }
-function driver(){
 
-}
+
+class Shop{
+    constructor(
+        private _items: Item[] = []
+        ){
+            let itemA: Item=new Item('Charger', 5, 'Keep your devices charged');
+            this.items.push(itemA);
+
+            let itemB:Item=new Item('Videogame', 70, 'The latest hot video game!');
+            this.items.push(itemB);
+
+            let itemC:Item=new Item('Keyboard', 30, 'A basic keyboard');
+            this.items.push(itemC);
+
+            let itemD:Item=new Item('MacBook', 799, 'For all your looking-down-on-the-poors needs');
+            this.items.push(itemD);
+
+            let itemE:Item=new Item('Drone', 1000, 'Spying is not just for the Government anymore');
+            this.items.push(itemE);
+
+            let itemF:Item=new Item('Giant TV', 640, 'So bright your kids will go blind.');
+            this.items.push(itemF)
+        }
+
+
+        public get items(): Item[] {
+            return this._items;
+        }
+
+        public set items(value: Item[]) {
+            this._items = value;
+        }
+
+        public showItems(){
+            let cartArea=document.getElementById('cart-area')
+            for (let i of this.items){
+                let iEl=i.itemElement();
+                cartArea?.append(iEl);
+            }
+        }
+
+        public updateCart(){
+            if (Shop.myUser){
+                Shop.myUser.cartHTMLElement()
+            }
+        }
+
+        static myUser:User|undefined;
+
+        static loginUser(){
+            const loginButton=document.getElementById('login-button')!;
+            loginButton.addEventListener( 'click', ()=>{
+                let userName=document.getElementById('username') as HTMLInputElement|null;
+                let userAge=document.getElementById('age') as HTMLInputElement|null;
+                if (userName!=null&&userAge!=null){
+                    this.myUser=new User(userName.value, userAge.valueAsNumber)
+                }
+                });
+        }
+
+
+    }
+
+pageLoader()
